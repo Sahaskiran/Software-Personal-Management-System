@@ -132,7 +132,7 @@ export default function EmployeePortal({ empId, empName, onLogout }: EmployeePor
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6 mb-8 rounded-lg mx-6 mt-6 flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Employee Dashboard</h2>
-          <p className="text-sm mt-1">Welcome, {empName || employee?.name}!</p>
+          <p className="text-sm mt-1">Welcome !</p>
         </div>
         <button
           onClick={onLogout}
