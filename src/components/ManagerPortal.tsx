@@ -272,7 +272,7 @@ export default function ManagerPortal({ onLogout }: ManagerPortalProps) {
       <div className="bg-gradient-to-r from-purple-600 to-purple-800 text-white p-6 mb-8 rounded-lg mx-6 mt-6 flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Manager Dashboard</h2>
-          <p className="text-sm mt-1">Welcome, John Doe!</p>
+          <p className="text-sm mt-1">Welcome</p>
         </div>
         <button
           onClick={onLogout}
