@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { supabase } from '../lib/supabase';
 
 interface LoginProps {
-  onLogin: (username: string, portalType: 'employee' | 'manager', empId?: string) => void;
+  onLogin: (username: string, portalType: 'employee' | 'manager', empId?: string, empName?: string) => void;
 }
 
 export default function Login({ onLogin }: LoginProps) {
@@ -9,14 +10,28 @@ export default function Login({ onLogin }: LoginProps) {
   const [password, setPassword] = useState('');
   const [portalType, setPortalType] = useState<'employee' | 'manager'>('employee');
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!username || !password) {
       alert('Please enter credentials');
       return;
     }
 
-    const empId = portalType === 'employee' ? 'EMP001' : undefined;
-    onLogin(username, portalType, empId);
+    if (portalType === 'employee') {
+      const { data: employee } = await supabase
+        .from('employees')
+        .select('id, name')
+        .eq('id', username.toUpperCase())
+        .maybeSingle();
+
+      if (!employee) {
+        alert('Invalid Employee ID. Please check your credentials.');
+        return;
+      }
+
+      onLogin(username, portalType, employee.id, employee.name);
+    } else {
+      onLogin(username, portalType);
+    }
   };
 
   return (
@@ -66,7 +81,7 @@ export default function Login({ onLogin }: LoginProps) {
         </button>
 
         <p className="text-center mt-5 text-gray-600 text-sm">
-          <strong>Demo:</strong> Use "raj" / "manager" for testing
+          <strong>Demo:</strong> Employee: EMP001, EMP002, EMP003 | Manager: any username
         </p>
       </div>
     </div>

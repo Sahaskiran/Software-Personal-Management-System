@@ -8,10 +8,11 @@ function App() {
     username: string;
     portalType: 'employee' | 'manager';
     empId?: string;
+    empName?: string;
   } | null>(null);
 
-  const handleLogin = (username: string, portalType: 'employee' | 'manager', empId?: string) => {
-    setCurrentUser({ username, portalType, empId });
+  const handleLogin = (username: string, portalType: 'employee' | 'manager', empId?: string, empName?: string) => {
+    setCurrentUser({ username, portalType, empId, empName });
   };
 
   const handleLogout = () => {
@@ -23,7 +24,7 @@ function App() {
   }
 
   if (currentUser.portalType === 'employee' && currentUser.empId) {
-    return <EmployeePortal empId={currentUser.empId} onLogout={handleLogout} />;
+    return <EmployeePortal empId={currentUser.empId} empName={currentUser.empName} onLogout={handleLogout} />;
   }
 
   return <ManagerPortal onLogout={handleLogout} />;

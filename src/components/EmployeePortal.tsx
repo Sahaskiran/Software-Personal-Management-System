@@ -3,10 +3,11 @@ import { supabase, Employee, Task, Attendance, Payslip, Performance } from '../l
 
 interface EmployeePortalProps {
   empId: string;
+  empName?: string;
   onLogout: () => void;
 }
 
-export default function EmployeePortal({ empId, onLogout }: EmployeePortalProps) {
+export default function EmployeePortal({ empId, empName, onLogout }: EmployeePortalProps) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -18,6 +19,13 @@ export default function EmployeePortal({ empId, onLogout }: EmployeePortalProps)
     loadEmployeeData();
 
     // Set up real-time subscriptions
+    const employeeSubscription = supabase
+      .channel('employee-changes')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'employees', filter: `id=eq.${empId}` }, () => {
+        loadEmployee();
+      })
+      .subscribe();
+
     const tasksSubscription = supabase
       .channel('tasks-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: `assigned_to=eq.${empId}` }, () => {
@@ -40,6 +48,7 @@ export default function EmployeePortal({ empId, onLogout }: EmployeePortalProps)
       .subscribe();
 
     return () => {
+      employeeSubscription.unsubscribe();
       tasksSubscription.unsubscribe();
       payslipsSubscription.unsubscribe();
       performanceSubscription.unsubscribe();
@@ -123,7 +132,7 @@ export default function EmployeePortal({ empId, onLogout }: EmployeePortalProps)
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6 mb-8 rounded-lg mx-6 mt-6 flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Employee Dashboard</h2>
-          <p className="text-sm mt-1">Welcome, {employee?.name}!</p>
+          <p className="text-sm mt-1">Welcome, {empName || employee?.name}!</p>
         </div>
         <button
           onClick={onLogout}
