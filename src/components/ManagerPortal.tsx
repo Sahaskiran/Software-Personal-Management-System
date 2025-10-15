@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase, Employee, Task, Payslip, Performance } from '../lib/supabase';
-import { X } from 'lucide-react';
+import { X, Pencil } from 'lucide-react';
 
 interface ManagerPortalProps {
   onLogout: () => void;
@@ -14,6 +14,7 @@ export default function ManagerPortal({ onLogout }: ManagerPortalProps) {
   const [performance, setPerformance] = useState<Performance[]>([]);
 
   const [showAddEmployee, setShowAddEmployee] = useState(false);
+  const [showEditEmployee, setShowEditEmployee] = useState(false);
   const [showAssignTask, setShowAssignTask] = useState(false);
 
   const [newEmployee, setNewEmployee] = useState({
@@ -25,6 +26,18 @@ export default function ManagerPortal({ onLogout }: ManagerPortalProps) {
     position: '',
     baseSalary: 0,
     joinDate: '',
+  });
+
+  const [editEmployee, setEditEmployee] = useState({
+    id: '',
+    name: '',
+    email: '',
+    phone: '',
+    department: 'IT',
+    position: '',
+    baseSalary: 0,
+    joinDate: '',
+    leaveBalance: 8,
   });
 
   const [newTask, setNewTask] = useState({
@@ -126,6 +139,51 @@ export default function ManagerPortal({ onLogout }: ManagerPortalProps) {
       baseSalary: 0,
       joinDate: '',
     });
+    loadManagerData();
+  };
+
+  const openEditEmployee = (emp: Employee) => {
+    setEditEmployee({
+      id: emp.id,
+      name: emp.name,
+      email: emp.email,
+      phone: emp.phone,
+      department: emp.department,
+      position: emp.position,
+      baseSalary: emp.base_salary,
+      joinDate: emp.join_date,
+      leaveBalance: emp.leave_balance,
+    });
+    setShowEditEmployee(true);
+  };
+
+  const updateEmployee = async () => {
+    if (!editEmployee.name || !editEmployee.email || !editEmployee.phone || !editEmployee.position) {
+      alert('Please fill all required fields');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('employees')
+      .update({
+        name: editEmployee.name,
+        email: editEmployee.email,
+        phone: editEmployee.phone,
+        department: editEmployee.department,
+        position: editEmployee.position,
+        base_salary: editEmployee.baseSalary,
+        join_date: editEmployee.joinDate,
+        leave_balance: editEmployee.leaveBalance,
+      })
+      .eq('id', editEmployee.id);
+
+    if (error) {
+      alert('Error updating employee: ' + error.message);
+      return;
+    }
+
+    alert('Employee updated successfully!');
+    setShowEditEmployee(false);
     loadManagerData();
   };
 
@@ -305,12 +363,21 @@ export default function ManagerPortal({ onLogout }: ManagerPortalProps) {
                           </span>
                         </td>
                         <td className="p-3">
-                          <button
-                            onClick={() => deleteEmployee(emp.id)}
-                            className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-600"
-                          >
-                            Delete
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => openEditEmployee(emp)}
+                              className="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition-colors"
+                              title="Edit Employee"
+                            >
+                              <Pencil size={16} />
+                            </button>
+                            <button
+                              onClick={() => deleteEmployee(emp.id)}
+                              className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-600"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -527,6 +594,137 @@ export default function ManagerPortal({ onLogout }: ManagerPortalProps) {
           </div>
         )}
       </div>
+
+      {showEditEmployee && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-semibold">Edit Employee</h3>
+              <button onClick={() => setShowEditEmployee(false)} className="text-gray-500 hover:text-gray-700">
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block mb-2 font-medium">Employee ID</label>
+                <input
+                  type="text"
+                  value={editEmployee.id}
+                  disabled
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 font-medium">Name</label>
+                <input
+                  type="text"
+                  value={editEmployee.name}
+                  onChange={(e) => setEditEmployee({ ...editEmployee, name: e.target.value })}
+                  placeholder="Full name"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 font-medium">Position</label>
+                <input
+                  type="text"
+                  value={editEmployee.position}
+                  onChange={(e) => setEditEmployee({ ...editEmployee, position: e.target.value })}
+                  placeholder="e.g., Developer"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 font-medium">Department</label>
+                <select
+                  value={editEmployee.department}
+                  onChange={(e) => setEditEmployee({ ...editEmployee, department: e.target.value })}
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-600 focus:outline-none"
+                >
+                  <option value="IT">IT</option>
+                  <option value="HR">HR</option>
+                  <option value="Sales">Sales</option>
+                  <option value="Finance">Finance</option>
+                  <option value="Operations">Operations</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block mb-2 font-medium">Email</label>
+                <input
+                  type="email"
+                  value={editEmployee.email}
+                  onChange={(e) => setEditEmployee({ ...editEmployee, email: e.target.value })}
+                  placeholder="email@company.com"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 font-medium">Phone</label>
+                <input
+                  type="tel"
+                  value={editEmployee.phone}
+                  onChange={(e) => setEditEmployee({ ...editEmployee, phone: e.target.value })}
+                  placeholder="10-digit phone number"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 font-medium">Base Salary</label>
+                <input
+                  type="number"
+                  value={editEmployee.baseSalary || ''}
+                  onChange={(e) => setEditEmployee({ ...editEmployee, baseSalary: parseInt(e.target.value) || 0 })}
+                  placeholder="50000"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 font-medium">Leave Balance</label>
+                <input
+                  type="number"
+                  value={editEmployee.leaveBalance || ''}
+                  onChange={(e) => setEditEmployee({ ...editEmployee, leaveBalance: parseInt(e.target.value) || 0 })}
+                  placeholder="8"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 font-medium">Joining Date</label>
+                <input
+                  type="date"
+                  value={editEmployee.joinDate}
+                  onChange={(e) => setEditEmployee({ ...editEmployee, joinDate: e.target.value })}
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-600 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={updateEmployee}
+                  className="flex-1 bg-purple-600 text-white py-2 rounded-lg font-semibold hover:bg-purple-700"
+                >
+                  Update Employee
+                </button>
+                <button
+                  onClick={() => setShowEditEmployee(false)}
+                  className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showAddEmployee && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
